@@ -6,6 +6,7 @@ import re
 from bs4 import BeautifulSoup
 import json
 import time
+import pickle
 
 class Posting:
     def __init__(self, docId, wordFreq):
@@ -27,9 +28,11 @@ def buildIndex(directory):
             filepath = os.path.join(root, filename)
             doc_count += 1
             docId += 1                                                      # increase docId
-            # with open(filename, "r", encoding="utf8") as f:
-            #     data = json.load(f)
-            #     docIds[docId] = data['url']
+            with open(filepath, "r", encoding="utf8") as f:
+                data = json.load(f)
+                url = data['url']
+                if url not in docIds.values():
+                    docIds[docId] = url
             tokens = tokenize(filepath)
             wordFreq = computeWordFrequencies(tokens)            # returns hashtable of words and frequency of that word in the document
             for token in wordFreq:
@@ -37,8 +40,8 @@ def buildIndex(directory):
                 if token not in index:                                      # if token is not in index create new list of posting
                     index[token] = []        
                 index[token].append(posting)                                # else just append to current list of postings
-            print(f"{doc_count}")
-    return index
+            # print(f"{doc_count}")
+    return index, docIds
 
 
 def tokenize(filename: str) -> list:
@@ -90,7 +93,10 @@ def saveIndexToFile(index: dict):
 
 if __name__ == "__main__":
     t0 = time.time()
-    saveIndexToFile(buildIndex("./analyst"))
+    index, docIds = buildIndex("./analyst")
+    saveIndexToFile(index)
+    pickle.dump(docIds, open('docIds.txt', 'wb'))
+    pickle.dump(index, open('indexfile.txt', 'wb'))
     t1 = time.time()
 
     total_time = (t1-t0)/60
