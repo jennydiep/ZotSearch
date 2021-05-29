@@ -148,7 +148,7 @@ def search(query):
     query = query.lower()
 
     # get top 5 results from term at a time retrieval
-    toppostings = termAtATimeRetrieval(query, merged_filename, alphaIndex, 10)
+    toppostings = termAtATimeRetrieval(query, merged_filename, alphaIndex, 20)
 
     # end timer
     t1 = time.time()

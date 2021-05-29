@@ -3,11 +3,12 @@
 
 # To Run Web Interface for Search Engine
 
-### run '```python web.py```' and launch http://127.0.0.1:5000/  (or link that terminal outputs)
+run '```python web.py```' and launch http://127.0.0.1:5000/  (or link that terminal outputs)
 
 #
 
 ## File Structure
+
 data - contains all data such as partial indices used to create final index, docId to URL hashmap, index of main index (containing where terms are alphabetically)
 
 static - folder that contains styling for web interface
