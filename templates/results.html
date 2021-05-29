@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+    <head>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"> -->
+    </head>
+    <body>
+    <div class="container">
+        <h1>CS121 Search Engine</h1>
+        <form action='#' method='post'>
+           <input type="text" id="search" name="search">
+           <button type="submit">Search</button>
+        </form>
+        
+        <p>Search Results for <b>{{ query }}</b><br><i>results found in {{ time }} milliseconds</i></p>
+        <ul class="collection with-header"></ul>
+            {% for url in results %}
+                <li class="collection-item"><a href="{{ url }}">{{ url }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+
+      
+   </body>
+</html>

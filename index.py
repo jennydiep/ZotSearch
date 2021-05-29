@@ -19,12 +19,13 @@ alpha_filename = 'data/alphaIndex.txt'
 merged_filename = "data/merged.txt"
 
 class Posting:
-    def __init__(self, docId, wordFreq):
+    def __init__(self, docId, wordFreq, importance):
         self.docId = docId
         self.wordFreq = wordFreq
+        self.importance = importance
     def __repr__(self):
         # return repr("Posting: docId=" + self.docId + " wordFreq=" + self.wordFreq)
-        return repr( "(" + self.docId + ", " + self.wordFreq + ")")
+        return repr( "(" + self.docId + ", " + self.wordFreq + ", " + self.importance + ')')
 
 class Item:
     def __init__(self, token, postings):
@@ -57,9 +58,14 @@ def buildIndex(directory):
                 if url not in docIds.values():                              # if docid not in dict then add new url docid to dict
                     docIds[docId] = url
             tokens = tokenize(data['content'])
+            importantTokens = findImportantTokens(data['content'])
             wordFreq = computeWordFrequencies(tokens)                       # returns hashtable of words and frequency of that word in the document
             for token in wordFreq:
-                posting = Posting(docId, wordFreq[token])
+                if token in importantTokens:                                # if a token was important (had title, h1 or bold tag) adjust weight of that token
+                    weight = importantTokens[token]
+                else:
+                    weight = 0 
+                posting = Posting(docId, wordFreq[token], weight)
                 if token not in index:                                      # if token is not in index create new list of posting
                     index[token] = []        
                 index[token].append(posting)                                # else just append to current list of postings
@@ -87,9 +93,7 @@ def tokenize(text: str) -> list:
     soup = BeautifulSoup(text, 'html.parser')
 
     for line in soup.get_text().split('\n'):
-        line = line.lower()
-        line = re.sub("[^a-z0-9\s-]", "", line)  # to remove all non alphanumeric characters
-        temp = re.findall("[a-z0-9]+", line)
+        temp = removeNonAlphaChars(line)
         tokens += temp                          # add result
 
     return tokens
@@ -107,6 +111,41 @@ def computeWordFrequencies(tokens: list) -> dict:
             word_freq[token] += 1        # else if already in map increase counter   O(1)
     return word_freq                     # O(1)
 
+def findImportantTokens(text: str) -> dict:
+    ''' 
+    takes in html text and finds tokens that are important (from title, h1, and bold tag) and assigns weight to that token 
+    returns a dict of tokens and their importance weight as the value
+    '''
+    importance = dict()
+
+    soup = BeautifulSoup(text, 'html.parser')
+
+    titles = soup.find_all('title')
+    headers = soup.find_all('h1')
+    bold = soup.find_all('b')
+
+    assignImportance(bold, 1, importance)
+    assignImportance(headers, 2, importance)
+    assignImportance(titles, 3, importance)
+
+    return importance
+
+def assignImportance(list: list, weight: int, importance: dict) -> dict:
+    ''' takes in list of strings and assigns each word a weight, mutates dictionary of tokens and their weights as values '''
+    for line in list:
+        words = removeNonAlphaChars(line.get_text())
+        for word in words:
+            importance[word] = weight
+    return 
+
+
+def removeNonAlphaChars(line: str):
+    ''' function that takes in a string and removes non alphanumeric characters and returns that string split by words '''
+    line = line.lower()
+    line = re.sub("[^a-z0-9\s-]", "", line)  # to remove all non alphanumeric characters
+    temp = re.findall("[a-z0-9]+", line)
+
+    return temp
 
 # HELPER FUNCTIONS
 def count_files(directory):
@@ -131,7 +170,7 @@ def saveAndSortIndexToFile(index: list, filename: str):
         for item in sortedindex:
             string = f"{item}  "                                        # item[0] = token
             for posting in index[item]:                                        # item[1] is list of postings
-                string += f" {posting.docId} {posting.wordFreq}  "
+                string += f" {posting.docId} {posting.wordFreq} {posting.importance}  "
             string += "\n"
 
             f.write(string)
@@ -187,7 +226,7 @@ def createString(item):
     ''' converts item to string '''
     string = f"{item.token}  "                                        # item[0] = token
     for posting in item.postings:                                        # item[1] is list of postings
-        string += f" {posting.docId} {posting.wordFreq}  "
+        string += f" {posting.docId} {posting.wordFreq} {posting.importance}  "
     string += "\n"
     return string
 
@@ -201,10 +240,11 @@ def parseline(line):
     return item
 
 def convertToPostings(array: list):
-    ''' takes in list of elements and converts them into pairs of postings'''
+    ''' takes in list of elements and converts them into postings'''
     postings = []
-    for i in range(0, len(array), 2):
-        postings.append(Posting(array[i], array[i+1]))
+    # print(array)
+    for i in range(0, len(array), 3):
+        postings.append(Posting(array[i], array[i+1], array[i+2]))
     return postings
 
 

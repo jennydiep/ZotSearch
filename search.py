@@ -6,8 +6,13 @@ import time
 from index import count_files
 from index import urls_foldername
 import math
+import sys
 
 merged_filename = 'data/merged.txt'
+
+file_count = count_files(urls_foldername)
+docIds = pickle.load(open('data/docIds.txt', 'rb'))
+alphaIndex = pickle.load(open('data/alphaIndex.txt', 'rb'))
 
 stopwords = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 
                 'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 
@@ -66,8 +71,9 @@ def termAtATimeRetrieval(query, indexfilename, alphaIndex, k):
         for key, value in postings.items():                    # get postings from inverted lists
     # for posting in list: 
             docId = key
-            wordfreq = value
-            tfidf = (1 + math.log(int(wordfreq))) * math.log(file_count/len(postings))
+            wordfreq = value[0]
+            importance_weight = value[1]
+            tfidf = ((1 + math.log(int(wordfreq))) * math.log(file_count/len(postings))) * int(importance_weight)
             if docId not in accumulators:       # create or add scores to documents
                 accumulators[docId] = tfidf
             else:
@@ -104,9 +110,9 @@ def convertToPostings(array: list):
     ''' takes in list of elements and converts them into pairs of postings'''
     postings = dict()
     docIds = []
-    for i in range(0, len(array), 2):
+    for i in range(0, len(array), 3):
         # postings.append(Posting(array[i], array[i+1]))
-        postings[array[i]] = array[i+1]
+        postings[array[i]] = [array[i+1], array[i+2]]
         docIds.append(array[i])
     return postings, docIds
 
@@ -135,6 +141,22 @@ def intersectPostings(inverted_lists: list, list_of_docIds: list):
 
     return new_inverted_lists
 
+def search(query):
+    ''' wrapper for web gui, query is string input from user '''
+    t0 = time.time()
+
+    query = query.lower()
+
+    # get top 5 results from term at a time retrieval
+    toppostings = termAtATimeRetrieval(query, merged_filename, alphaIndex, 10)
+
+    # end timer
+    t1 = time.time()
+    total_time = (t1-t0) * 1000
+
+    return toppostings, total_time
+        
+
 
 if __name__ == '__main__':
     # index = pickle.load(open('indexfile.txt', 'rb'))
@@ -143,22 +165,19 @@ if __name__ == '__main__':
     file_count = count_files(urls_foldername)
     print(file_count)
 
+    # query_terms = sys.argv[1:]
+
     query = input('Search: ').lower()
 
     while query != "quit":
         # start timer 
         t0 = time.time()
 
-        # get top 5 results from term at a time retrieval
-        toppostings = termAtATimeRetrieval(query, merged_filename, alphaIndex, 10)
+        toppostings, total_time = search(query)
 
         # print out results
         for posting in toppostings:
             print(docIds[int(posting[0])])
-
-        # end timer
-        t1 = time.time()
-        total_time = (t1-t0) * 1000
         print(f"search took {total_time} milliseconds.")
 
         # prompt user for next query
