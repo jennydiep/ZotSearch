@@ -1,7 +1,6 @@
+# search for query term
+
 import pickle
-from index import Posting, resetFiles
-from index import Item
-# from index import convertToPostings
 import time
 from index import count_files
 from index import urls_foldername
@@ -25,56 +24,33 @@ stopwords = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you',
                 'isn', "isn't", 'ma', 'mightn', "mightn't", 'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 
                 'won', "won't", 'wouldn', "wouldn't"]
 
-
-# def documentAtATimeRetrieval(query, index, f, g, k):
-#     '''
-#     takes in inputs and returns top k documents that match the query.
-#     f - document feature function
-#     g - query feature function
-#     '''
-#     array = []
-#     results = [] # stores matching documents
-#     query_postings = []
-
-#     terms = query.split(' ')
-#     for term in terms:
-#     #     query_postings.append(index[term])
-#     # for i in range(num_docs):
-#     #     for j in range(len(terms)):
-        
-
-
-#     return
-
-# [(1, 1), (12, 1), (273, 1), (1040, 1), (1840, 1), ]
-
 def termAtATimeRetrieval(query, indexfilename, alphaIndex, k):
     '''
     takes in inputs and returns top k documents that match the query]
     '''
-    accumulators = dict()                   # structure -> docId : score
+    accumulators = dict()                                       # structure -> docId : score
     inverted_lists = []
-    results = [] # TODO make priority queue
+    results = [] 
     list_of_docIDs = []
 
     indexfile = open(indexfilename, 'r')
 
-    query_terms = query.strip('\n').split()             # split query terms
+    query_terms = query.strip('\n').split()                     # split query terms
     [word for word in query_terms if word not in stopwords]
     for term in query_terms:
-        li, ids = findTermInFile(term, indexfile, alphaIndex)
-        inverted_lists.append(li)                           # store inverted lists of each term from query (only scoring documents that contain query terms)
-        list_of_docIDs.append(ids)
-    list = intersectPostings(inverted_lists, list_of_docIDs)
+        li, ids = findTermInFile(term, indexfile, alphaIndex)   # get term's posting
+        inverted_lists.append(li)                               # store inverted lists of each term from query (only scoring documents that contain query terms)
+        list_of_docIDs.append(ids)                              
+    list = intersectPostings(inverted_lists, list_of_docIDs)    # do boolean AND on lists
     # print(inverted_lists)
     for postings in list:
-        for key, value in postings.items():                    # get postings from inverted lists
+        for key, value in postings.items():                     # get postings from inverted lists
     # for posting in list: 
             docId = key
             wordfreq = value[0]
             importance_weight = value[1]
             tfidf = ((1 + math.log(int(wordfreq))) * math.log(file_count/len(postings))) * int(importance_weight)
-            if docId not in accumulators:       # create or add scores to documents
+            if docId not in accumulators:                       # create or add scores to documents
                 accumulators[docId] = tfidf
             else:
                 accumulators[docId] += tfidf

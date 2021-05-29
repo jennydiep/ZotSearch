@@ -1,4 +1,4 @@
-# building the inverted index 
+# build the inverted index 
 
 import os
 import sys
@@ -55,10 +55,10 @@ def buildIndex(directory):
             with open(filepath, "r", encoding="utf8") as f:
                 data = json.load(f)
                 url = data['url']
-                if url not in docIds.values():                              # if docid not in dict then add new url docid to dict
+                if url not in docIds.values():                              # if docid not in dict then add new url docid to dict 
                     docIds[docId] = url
             tokens = tokenize(data['content'])
-            importantTokens = findImportantTokens(data['content'])
+            importantTokens = findImportantTokens(data['content'])          # get hashtable of importance words
             wordFreq = computeWordFrequencies(tokens)                       # returns hashtable of words and frequency of that word in the document
             for token in wordFreq:
                 if token in importantTokens:                                # if a token was important (had title, h1 or bold tag) adjust weight of that token
@@ -168,27 +168,26 @@ def saveAndSortIndexToFile(index: list, filename: str):
     sortedindex = sorted(index.keys(), key=lambda item: item.lower())
     with open(filename, 'w') as f:
         for item in sortedindex:
-            string = f"{item}  "                                        # item[0] = token
-            for posting in index[item]:                                        # item[1] is list of postings
+            string = f"{item}  "                                                   
+            for posting in index[item]:                                             
                 string += f" {posting.docId} {posting.wordFreq} {posting.importance}  "
             string += "\n"
 
             f.write(string)
     return
 
+# MERGER
 def twoWayMerge(file1, file2, outputfile):
     ''' takes in two files and merges into one big file '''
     f1 = open(file1, 'r')
     f2 = open(file2, 'r')
 
-    # files_to_read = [f1, f2]
-
     line1 = f1.readline()
     line2 = f2.readline()
 
     with open(outputfile, "a+") as f:
-        while line1 != '' and line2 != '':               # while files aren't at EOF
-            item1 = parseline(line1)                    # get token and postings from line
+        while line1 != '' and line2 != '':                  # while files aren't at EOF
+            item1 = parseline(line1)                        # get token and postings from line
             item2 = parseline(line2)
 
             if line1 == '':
@@ -222,10 +221,11 @@ def twoWayMerge(file1, file2, outputfile):
     f1.close()
     f2.close()
 
+# HELPER FUNCTIONS FOR MERGER
 def createString(item):
     ''' converts item to string '''
-    string = f"{item.token}  "                                        # item[0] = token
-    for posting in item.postings:                                        # item[1] is list of postings
+    string = f"{item.token}  "                                        
+    for posting in item.postings:                                      
         string += f" {posting.docId} {posting.wordFreq} {posting.importance}  "
     string += "\n"
     return string
@@ -248,7 +248,7 @@ def convertToPostings(array: list):
     return postings
 
 
-# make function to index the merged index by alphabet
+# INDEX THE INDEX (by alphabet)
 def indexIndexByAlphabet(filename: str):
     index = dict()
     letter = '0'
